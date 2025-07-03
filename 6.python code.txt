@@ -1,0 +1,65 @@
+# 📦 Step 1: Import required libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 📥 Step 2: Load the dataset
+df = pd.read_csv('/content/titanic dataset.csv')  # Update path if necessary
+
+# 👀 Step 3: Preview the dataset
+print("Dataset Preview:\n", df.head())
+print("\nMissing values before cleaning:\n", df.isnull().sum())
+
+# 🧹 Step 4: Data Cleaning
+# Drop columns not useful for prediction
+df.drop(['Name', 'Ticket', 'Cabin'], axis=1, inplace=True)
+
+# Fill missing Age with median, Embarked with mode, and Fare with median
+df['Age'].fillna(df['Age'].median(), inplace=True)
+df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
+df['Fare'].fillna(df['Fare'].median(), inplace=True) # Added this line to handle missing Fare
+
+# Convert categorical variables to numerical
+label_enc = LabelEncoder()
+df['Sex'] = label_enc.fit_transform(df['Sex'])  # male=1, female=0
+df['Embarked'] = label_enc.fit_transform(df['Embarked'])
+
+# 👀 Step 4.5: Check missing values after cleaning
+print("\nMissing values after cleaning:\n", df.isnull().sum())
+
+
+# 🎯 Step 5: Define Features and Target
+X = df.drop('Survived', axis=1)
+y = df['Survived']
+
+# 🎯 Step 6: Feature Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 🔀 Step 7: Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# 🤖 Step 8: Train KNN Model
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# 📊 Step 9: Make Predictions
+y_pred = knn.predict(X_test)
+
+# ✅ Step 10: Evaluate the Model
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+# 📈 Optional: Plot Confusion Matrix
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues', xticklabels=['Not Survived', 'Survived'], yticklabels=['Not Survived', 'Survived'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
